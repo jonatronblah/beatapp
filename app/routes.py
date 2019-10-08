@@ -81,7 +81,7 @@ def getbeats(audio):
         mfcc = librosa.feature.mfcc(y[i[0]:i[1]], sr=sr)
         mfcc = np.mean(mfcc.flatten())
         chroma = librosa.feature.chroma_stft(y[i[0]:i[1]], sr=sr)
-        note = np.max([np.mean(i) for i in chroma])
+        note = np.argmax([np.mean(i) for i in chroma])
         flatness_list.append(flatness)
         rms_list.append(rms)
         specbw_list.append(specbw)
@@ -118,7 +118,7 @@ def upload():
         db.session.commit()
         df = getbeats(os.path.join(app.instance_path, filename))
         for row in df.itertuples():
-            b = Beat(start=row[5], end=row[6], flatness=row[0], rms=row[1], specbw=row[2], mfcc=row[3], note=row[4], n_group=row[8], idx=row[7], song_id=Song.query.filter_by(user_id=int(current_user.id)).all()[-1].id) 
+            b = Beat(start=row[6], end=row[7], flatness=row[1], rms=row[2], specbw=row[3], mfcc=row[4], note=row[5], n_group=row[9], idx=row[8], song_id=Song.query.filter_by(user_id=int(current_user.id)).all()[-1].id) 
             db.session.add(b)
         
         
