@@ -1,0 +1,22 @@
+<html>
+    <head>
+      {% if title %}
+      <title>{{ title }} - beatapp</title>
+      {% else %}
+      <title>Welcome to beatapp</title>
+      {% endif %}
+    </head>
+    <body>
+        <div>
+		beatapp: 
+			<a href="{{ url_for('index') }}">Home</a>
+			{% if current_user.is_anonymous %}
+			<a href="{{ url_for('login') }}">Login</a>
+			{% else %}
+			<a href="{{ url_for('logout') }}">Logout</a>
+			{% endif %}
+		</div>
+        <hr>
+        {% block content %}{% endblock %}
+    </body>
+</html>
