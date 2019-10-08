@@ -4,8 +4,15 @@ from werkzeug.utils import secure_filename
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, UploadForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, Song
+from app.models import User, Song, Beat
 import os
+import librosa
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from itertools import tee
+
 
 
 @app.route('/')
@@ -45,7 +52,59 @@ def login():
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
-    
+def pairwise(iterable):
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
+
+nclusters= 8
+  
+def getbeats(audio):
+    y, sr = librosa.load(audio, sr=44100)
+    _, beats = librosa.beat.beat_track(y=y, sr=sr, units='samples')
+    beatpairs = [i for i in pairwise(beats)]
+    flatness_list = []
+    rms_list = []
+    specbw_list = []
+    mfcc_list = []
+    start = []
+    end = []
+    note_list = []
+    idx = []
+    for e, i in enumerate(beatpairs):
+        flatness = librosa.feature.spectral_flatness(y=y[i[0]:i[1]])
+        flatness = np.mean(flatness)
+        rms = librosa.feature.rms(y=y[i[0]:i[1]])
+        rms = np.mean(rms)
+        specbw = librosa.feature.spectral_bandwidth(y=y[i[0]:i[1]], sr=sr)
+        specbw = np.mean(specbw)
+        mfcc = librosa.feature.mfcc(y[i[0]:i[1]], sr=sr)
+        mfcc = np.mean(mfcc.flatten())
+        chroma = librosa.feature.chroma_stft(y[i[0]:i[1]], sr=sr)
+        note = np.max([np.mean(i) for i in chroma])
+        flatness_list.append(flatness)
+        rms_list.append(rms)
+        specbw_list.append(specbw)
+        mfcc_list.append(mfcc)
+        note_list.append(note)
+        start.append(i[0])
+        end.append(i[1])
+        idx.append(e)
+    df = pd.DataFrame()
+    df['flatness'] = flatness_list
+    df['rms'] = rms_list
+    df['specbw'] = specbw_list
+    df['mfcc'] = mfcc_list
+    df['note'] = note_list
+    df['start'] = start
+    df['end'] = end
+    df['idx'] = idx
+    X_scaled = StandardScaler().fit_transform(df.iloc[:,:4])
+    ky = KMeans(n_clusters=nclusters).fit_predict(X_scaled)
+    df['labels'] = ky
+    return df
+
+  
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -57,13 +116,20 @@ def upload():
         s = Song(filename=filename, user_id=int(current_user.id))
         db.session.add(s)
         db.session.commit()
-        r = Song.query.filter_by(user_id=current_user.id)
+        df = getbeats(os.path.join(app.instance_path, filename))
+        for row in df.itertuples():
+            b = Beat(start=row[5], end=row[6], flatness=row[0], rms=row[1], specbw=row[2], mfcc=row[3], note=row[4], n_group=row[8], idx=row[7], song_id=Song.query.filter_by(user_id=int(current_user.id)).all()[-1].id) 
+            db.session.add(b)
         
+        
+        db.session.commit()
+        r = Song.query.filter_by(user_id=current_user.id)
         return ', '.join([i.filename for i in r])
     return render_template('upload.html', title='Upload New Track', form=form)
         
 
 
+    
 
 
     
