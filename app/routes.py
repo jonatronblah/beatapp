@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, UploadForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User
+from app.models import User, Song
 import os
 
 
@@ -54,7 +54,12 @@ def upload():
         f = form.upload.data
         filename = secure_filename(f.filename)
         f.save(os.path.join(app.instance_path, filename))
-        return 'it worked'
+        s = Song(filename=filename, user_id=int(current_user.id))
+        db.session.add(s)
+        db.session.commit()
+        r = Song.query.filter_by(user_id=current_user.id)
+        
+        return ', '.join([i.filename for i in r])
     return render_template('upload.html', title='Upload New Track', form=form)
         
 
