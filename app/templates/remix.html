@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Remix a Track</h1>
+    <form action="" method="post">
+		{{ form.hidden_tag() }}
+		<p>
+            {{ form.song_source.label }}<br>
+            {{ form.song_source() }}<br>
+        </p>
+		<p>
+            {{ form.remix_template.label }}<br>
+            {{ form.remix_template() }}<br>
+        </p>
+		<p>{{ form.submit() }}</p>
+	</form>
+{% endblock %}

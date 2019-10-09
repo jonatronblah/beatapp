@@ -10,7 +10,7 @@ import random
 
 song2 = r"C:\Users\jonathan\Desktop\422-beatslice\app\source\Max D - Many Any - 09 Cuz Its The Way.wav"
 
-song1 = r"C:\Users\jonathan\Desktop\422-beatslice\app\source\04. The Sun Don't Lie.wav"
+song1 = r"C:\Users\scheerja\Downloads\ma.wav"
 
 nclusters = 8
 
@@ -19,7 +19,10 @@ def pairwise(iterable):
     next(b, None)
     return zip(a, b)
 
-def getstats(beatpairs, y, sr):
+def getbeats(audio):
+    y, sr = librosa.load(audio, sr=44100)
+    _, beats = librosa.beat.beat_track(y=y, sr=sr, units='samples')
+    beatpairs = [i for i in pairwise(beats)]
     flatness_list = []
     rms_list = []
     specbw_list = []
@@ -38,13 +41,13 @@ def getstats(beatpairs, y, sr):
         mfcc = librosa.feature.mfcc(y[i[0]:i[1]], sr=sr)
         mfcc = np.mean(mfcc.flatten())
         chroma = librosa.feature.chroma_stft(y[i[0]:i[1]], sr=sr)
-        note = np.max([np.mean(i) for i in chroma])
+        note = np.argmax([np.mean(i) for i in chroma])
         flatness_list.append(flatness)
         rms_list.append(rms)
         specbw_list.append(specbw)
         mfcc_list.append(mfcc)
         note_list.append(note)
-        start.append((i[0])
+        start.append(i[0])
         end.append(i[1])
         idx.append(e)
     df = pd.DataFrame()
@@ -61,25 +64,26 @@ def getstats(beatpairs, y, sr):
     df['labels'] = ky
     return df
     
-
+df = getbeats(song1)
 
 
 def dub(df1, df2, audio):
     out = dsp.buffer()
     dubhead = 0
-    for e, i in enumerate(df2.labels[:1200]):
-        rpool = list(df1['startstop'][df1['labels'] == i])
-        try:
-            sl = random.choice(rpool)
-        except:
-            print(i)
-        if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
-            a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
-        else:
-            a = audio[sl[0]:sl[1]]
-        out.dub(a, dubhead)
-        dubhead += librosa.samples_to_time((sl[1]-sl[0]), sr=44100)
-        print("done dubbing number " + str(e) + " of " + str(len(df2.labels)))
+    while dubhead < 210
+        for e, i in enumerate(df2.labels[:1200]):
+            rpool = list(df1['startstop'][df1['labels'] == i])
+            try:
+                sl = random.choice(rpool)
+            except:
+                print(i)
+            if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
+                a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
+            else:
+                a = audio[sl[0]:sl[1]]
+            out.dub(a, dubhead)
+            dubhead += librosa.samples_to_time((sl[1]-sl[0]), sr=44100)
+            print("done dubbing number " + str(e) + " of " + str(len(df2.labels)))
     return out
     
 

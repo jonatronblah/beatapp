@@ -1,8 +1,8 @@
-from flask import render_template, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash, send_file
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, UploadForm
+from app.forms import LoginForm, RegistrationForm, UploadForm, RemixForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Song, Beat
 import os
@@ -129,6 +129,45 @@ def upload():
         
 
 
+def dub(songid1, songid2):
+    out = dsp.buffer()
+    dubhead = 0
+    filename = Song.query.filter_by(id=songid1.filename)
+    audio = dsp.read(os.path.join(app.instance_path, filename))
+    labels2 = [i.n_group for i in Beat.query.filter_by(song_id=songid2)]
+    
+    
+    while dubhead < 30:
+        for e, i in enumerate(labels2):
+            rstart = [s.start for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
+            rend = [s.end for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
+            rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
+            
+            
+            sl = random.choice(rpool)
+            
+            if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
+                a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
+            else:
+                a = audio[sl[0]:sl[1]]
+            out.dub(a, dubhead)
+            dubhead += librosa.samples_to_time((sl[1]-sl[0]), sr=44100)
+    return out
+
+
+@app.route('/remix', methods=['GET', 'POST'])
+@login_required
+def remix():
+    form = RemixForm()
+    
+    if form.validate_on_submit():
+        songid1 = form.song_source.data
+        songid2 = form.remix_template.data
+        remix = dub(songid1, songid2)
+        return send_file(remix.write('remix.wav'))
+    
+    return(render_template('remix.html', title='Remix a Track', form=form))
+        
     
 
 
