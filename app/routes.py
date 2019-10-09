@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from itertools import tee
 from pippi import dsp
+from pydub import AudioSegment
 
 
 
@@ -128,6 +129,12 @@ def upload():
         f = form.upload.data
         filename = secure_filename(f.filename)
         f.save(os.path.join(app.instance_path, filename))
+        if filename.endswith(".mp3"):
+            sound = AudioSegment.from_mp3(os.path.join(app.instance_path, filename))
+            filenamemp3 = filename.split('.')[0] + '.wav'
+            sound.export(os.path.join(app.instance_path, filenamemp3), format='wav')
+            os.remove(os.path.join(app.instance_path, filename))
+            filename = filenamemp3
         s = Song(filename=filename, user_id=int(current_user.id))
         db.session.add(s)
         db.session.commit()
