@@ -6,12 +6,14 @@ from app.forms import LoginForm, RegistrationForm, UploadForm, RemixForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Song, Beat
 import os
+import random
 import librosa
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from itertools import tee
+from pippi import dsp
 
 
 
@@ -57,11 +59,24 @@ def pairwise(iterable):
     next(b, None)
     return zip(a, b)
 
+def halftime(b):
+    midpoints = []
+    b = list(b)
+    for e, i in enumerate(b):
+        if e < len(b)-1:
+            midpoints.append(np.round((i+b[e+1])/2))
+        c = midpoints + b
+        c.sort()
+        c = np.asarray(c, dtype=np.int32)
+    return c
+    
+    
 nclusters= 8
   
 def getbeats(audio):
     y, sr = librosa.load(audio, sr=44100)
     _, beats = librosa.beat.beat_track(y=y, sr=sr, units='samples')
+    beats = halftime(beats)
     beatpairs = [i for i in pairwise(beats)]
     flatness_list = []
     rms_list = []
@@ -132,20 +147,21 @@ def upload():
 def dub(songid1, songid2):
     out = dsp.buffer()
     dubhead = 0
-    filename = Song.query.filter_by(id=songid1.filename)
+    filename = Song.query.filter_by(id=songid1).first().filename
     audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.n_group for i in Beat.query.filter_by(song_id=songid2)]
     
     
-    while dubhead < 30:
-        for e, i in enumerate(labels2):
+    
+    for e, i in enumerate(labels2):
+        while dubhead < 30:
             rstart = [s.start for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rend = [s.end for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
-            
-            
+                
+                
             sl = random.choice(rpool)
-            
+                
             if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
                 a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
             else:
@@ -164,7 +180,8 @@ def remix():
         songid1 = form.song_source.data
         songid2 = form.remix_template.data
         remix = dub(songid1, songid2)
-        return send_file(remix.write('remix.wav'))
+        remix.write(os.path.join(app.instance_path, 'remixes\\remix.wav'))
+        return send_file(os.path.join(app.instance_path, 'remixes\\remix.wav'), as_attachment=True)
     
     return(render_template('remix.html', title='Remix a Track', form=form))
         
