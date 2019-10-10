@@ -8,8 +8,10 @@
     </head>
     <body>
         <div>
-		beatapp: 
+		beatapp:
 			<a href="{{ url_for('index') }}">Home</a>
+			<a href="{{ url_for('upload') }}">Upload</a>
+			<a href="{{ url_for('remix') }}">Remix</a>
 			{% if current_user.is_anonymous %}
 			<a href="{{ url_for('login') }}">Login</a>
 			{% else %}

@@ -23,7 +23,7 @@ from pydub import AudioSegment
 @login_required
 def index():
     return render_template('index.html', title='Home')
-    
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -37,7 +37,7 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
-    
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -70,13 +70,14 @@ def halftime(b):
         c.sort()
         c = np.asarray(c, dtype=np.int32)
     return c
-    
-    
+
+
 nclusters= 8
-  
+
 def getbeats(audio):
     y, sr = librosa.load(audio, sr=44100)
     _, beats = librosa.beat.beat_track(y=y, sr=sr, units='samples')
+    beats = halftime(beats)
     beats = halftime(beats)
     beatpairs = [i for i in pairwise(beats)]
     flatness_list = []
@@ -120,7 +121,7 @@ def getbeats(audio):
     df['labels'] = ky
     return df
 
-  
+
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -137,18 +138,18 @@ def upload():
             filename = filenamemp3
         s = Song(filename=filename, user_id=int(current_user.id))
         db.session.add(s)
-        db.session.commit()
+
         df = getbeats(os.path.join(app.instance_path, filename))
         for row in df.itertuples():
-            b = Beat(start=row[6], end=row[7], flatness=row[1], rms=row[2], specbw=row[3], mfcc=row[4], note=row[5], n_group=row[9], idx=row[8], song_id=Song.query.filter_by(user_id=int(current_user.id)).all()[-1].id) 
+            b = Beat(start=row[6], end=row[7], flatness=row[1], rms=row[2], specbw=row[3], mfcc=row[4], note=row[5], n_group=row[9], idx=row[8], song_id=Song.query.filter_by(user_id=int(current_user.id)).all()[-1].id)
             db.session.add(b)
-        
-        
+
+
         db.session.commit()
         r = Song.query.filter_by(user_id=current_user.id)
         return ', '.join([i.filename for i in r])
     return render_template('upload.html', title='Upload New Track', form=form)
-        
+
 
 
 def dub(songid1, songid2):
@@ -157,18 +158,18 @@ def dub(songid1, songid2):
     filename = Song.query.filter_by(id=songid1).first().filename
     audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.n_group for i in Beat.query.filter_by(song_id=songid2)]
-    
-    
-    
+
+
+
     for e, i in enumerate(labels2):
-        while dubhead < 30:
+        while dubhead < 60:
             rstart = [s.start for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rend = [s.end for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
-                
-                
+
+
             sl = random.choice(rpool)
-                
+
             if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
                 a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
             else:
@@ -182,20 +183,20 @@ def dub(songid1, songid2):
 @login_required
 def remix():
     form = RemixForm()
-    
+
     if form.validate_on_submit():
         songid1 = form.song_source.data
         songid2 = form.remix_template.data
         remix = dub(songid1, songid2)
-        remix.write(os.path.join(app.instance_path, 'remixes\\remix.wav'))
-        return send_file(os.path.join(app.instance_path, 'remixes\\remix.wav'), as_attachment=True)
-    
+        remix.write(os.path.join(app.instance_path, 'remixes/remix.wav'))
+        return send_file(os.path.join(app.instance_path, 'remixes/remix.wav'), as_attachment=True)
+
     return(render_template('remix.html', title='Remix a Track', form=form))
-        
-    
 
 
-    
+
+
+
 @app.route('/logout')
 def logout():
     logout_user()
