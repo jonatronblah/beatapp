@@ -158,7 +158,7 @@ def dub(songid1, songid2):
     filename = Song.query.filter_by(id=songid1).first().filename
     audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.n_group for i in Beat.query.filter_by(song_id=songid2)]
-
+    ar = [.5, .03, .03, .05, .03, .03, .03, .05, .03, .03, .03, .03, .03, .03, .03, .04]
 
 
     for e, i in enumerate(labels2):
@@ -169,13 +169,11 @@ def dub(songid1, songid2):
 
 
             sl = random.choice(rpool)
-
-            if audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]:
-                a = audio[sl[0]:sl[1]+int((sl[1]-sl[0])/2)]
-            else:
-                a = audio[sl[0]:sl[1]]
+            bl = int(sl[1]-sl[0])
+            l = (sl[1]+(bl*np.random.choice(16, p=ar)))
+            a = audio[sl[0]:l]
             out.dub(a, dubhead)
-            dubhead += librosa.samples_to_time((sl[1]-sl[0]), sr=44100)
+            dubhead += librosa.samples_to_time(len(a), sr=44100)
     return out
 
 
