@@ -71,6 +71,13 @@ def halftime(b):
         c = np.asarray(c, dtype=np.int32)
     return c
 
+def dist(x, n):
+
+    d = np.random.dirichlet(np.ones(16)/x)
+    d1 = sorted(d[:n])
+    d2 = sorted(d[n:], reverse=True)
+    d = d1 + d2
+    return d
 
 nclusters= 8
 
@@ -152,13 +159,13 @@ def upload():
 
 
 
-def dub(songid1, songid2):
+def dub(songid1, songid2, dist_value, posi):
     out = dsp.buffer()
     dubhead = 0
     filename = Song.query.filter_by(id=songid1).first().filename
     audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.n_group for i in Beat.query.filter_by(song_id=songid2)]
-    ar = [.5, .03, .03, .05, .03, .03, .03, .05, .03, .03, .03, .03, .03, .03, .03, .04]
+    ar = dist(dist_value, posi)
 
 
     for e, i in enumerate(labels2):
@@ -185,7 +192,9 @@ def remix():
     if form.validate_on_submit():
         songid1 = form.song_source.data
         songid2 = form.remix_template.data
-        remix = dub(songid1, songid2)
+        dist_value = float(form.dist_value.data)
+        posi = form.posi.data - 1
+        remix = dub(songid1, songid2, dist_value, posi)
         remix.write(os.path.join(app.instance_path, 'remixes/remix.wav'))
         return send_file(os.path.join(app.instance_path, 'remixes/remix.wav'), as_attachment=True)
 
