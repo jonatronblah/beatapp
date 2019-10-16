@@ -44,9 +44,9 @@ class RemixForm(FlaskForm):
 
     song_source = SelectField(u'Song Source')
     remix_template = SelectField(u'Remix Template')
-    dist_value = DecimalField(u'Distribution Value', validators=[InputRequired()], places=4)
+    dist_value = DecimalField(u'Beat Chance', validators=[InputRequired()], places=4)
     posi = IntegerField(u'Beat Length', validators=[InputRequired()])
-    var = DecimalField(u'Beat Chance', validators=[InputRequired()], places=1)
+    var = DecimalField(u'Smoothing', validators=[InputRequired()], places=1)
 
     def validate_posi(self, posi):
         if posi.data > 16 or posi.data < 1:
