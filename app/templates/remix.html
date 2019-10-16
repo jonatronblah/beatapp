@@ -15,10 +15,23 @@
         <p>
             {{ form.dist_value.label }}<br>
             {{ form.dist_value() }}<br>
+			{% for error in form.dist_value.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
         <p>
             {{ form.posi.label }}<br>
             {{ form.posi() }}<br>
+			{% for error in form.posi.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+		<p>
+            {{ form.var.label }}<br>
+            {{ form.var() }}<br>
+			{% for error in form.var.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
 		<p>{{ form.submit() }}</p>
 	</form>

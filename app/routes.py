@@ -159,7 +159,7 @@ def upload():
 
 
 
-def dub(songid1, songid2, dist_value, posi):
+def dub(songid1, songid2, dist_value, posi, var):
     out = dsp.buffer()
     dubhead = 0
     filename = Song.query.filter_by(id=songid1).first().filename
@@ -179,8 +179,11 @@ def dub(songid1, songid2, dist_value, posi):
             bl = int(sl[1]-sl[0])
             l = (sl[1]+(bl*np.random.choice(16, p=ar)))
             a = audio[sl[0]:l]
+            stime = librosa.samples_to_time(len(a), sr=44100)
+            #var = 0.5
+            a = a.taper((stime/2)*var)
             out.dub(a, dubhead)
-            dubhead += librosa.samples_to_time(len(a), sr=44100)
+            dubhead += stime - ((stime/2)*var)
     return out
 
 
@@ -194,7 +197,8 @@ def remix():
         songid2 = form.remix_template.data
         dist_value = float(form.dist_value.data)
         posi = form.posi.data - 1
-        remix = dub(songid1, songid2, dist_value, posi)
+        var = float(form.var.data)
+        remix = dub(songid1, songid2, dist_value, posi, var)
         remix.write(os.path.join(app.instance_path, 'remixes/remix.wav'))
         return send_file(os.path.join(app.instance_path, 'remixes/remix.wav'), as_attachment=True)
 
