@@ -45,8 +45,8 @@ class RemixForm(FlaskForm):
     song_source = SelectField(u'Song Source')
     remix_template = SelectField(u'Remix Template')
     dist_value = DecimalField(u'Distribution Value', validators=[InputRequired()], places=4)
-    posi = IntegerField(u'Focus', validators=[InputRequired()])
-    var = DecimalField(u'Smoothing', validators=[InputRequired()], places=1)
+    posi = IntegerField(u'Beat Length', validators=[InputRequired()])
+    var = DecimalField(u'Beat Chance', validators=[InputRequired()], places=1)
 
     def validate_posi(self, posi):
         if posi.data > 16 or posi.data < 1:
@@ -55,11 +55,11 @@ class RemixForm(FlaskForm):
     def validate_dist(self, dist_value):
         if dist_value.data > 1000 or dist_value.data < .0001:
             raise ValidationError('Please choose a value between .0001 and 1000.')
-            
+
     def validate_var(self, var):
         if var.data > 1 or var.data < 0:
             raise ValidationError('Please choose a value between 0 and 1.')
-            
+
     submit = SubmitField('Remix!')
 
     def __init__(self):
