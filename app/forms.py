@@ -50,7 +50,7 @@ class RemixForm(FlaskForm):
 
     def validate_posi(self, posi):
         if posi.data > 16 or posi.data < 1:
-            raise ValidationError('Please choose a value between 0 and 15.')
+            raise ValidationError('Please choose a value between 1 and 16.')
 
     def validate_dist_value(self, dist_value):
         if dist_value.data > 1000 or dist_value.data < .0001:
