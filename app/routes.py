@@ -55,6 +55,15 @@ def login():
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    user = current_user.username
+    r = Song.query.filter_by(user_id=current_user.id)
+    songs =  ', '.join([i.filename for i in r])
+    return render_template('profile.html', songs = songs, user = user)
+
+
 def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
@@ -153,8 +162,7 @@ def upload():
 
 
         db.session.commit()
-        r = Song.query.filter_by(user_id=current_user.id)
-        return ', '.join([i.filename for i in r])
+        return redirect(url_for('profile'))
     return render_template('upload.html', title='Upload New Track', form=form)
 
 
