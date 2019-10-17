@@ -199,8 +199,8 @@ def remix():
         posi = form.posi.data - 1
         var = float(form.var.data)
         remix = dub(songid1, songid2, dist_value, posi, var)
-        remix.write(os.path.join(app.instance_path, 'remixes/remix.wav'))
-        return send_file(os.path.join(app.instance_path, 'remixes/remix.wav'), as_attachment=True)
+        remix.write(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'))
+        return send_file(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'), as_attachment=True)
 
     return(render_template('remix.html', title='Remix a Track', form=form))
 
