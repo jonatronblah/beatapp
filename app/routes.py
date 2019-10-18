@@ -195,8 +195,8 @@ def dub(songid1, songid2, dist_value, posi, var):
 def dub2(songid1, songid2, dist_value, posi, var):
     out = dsp.buffer()
     dubhead = 0
-    filename = Song.query.filter_by(id=songid1).first().filename
-    audio = dsp.read(os.path.join(app.instance_path, filename))
+    #filename = Song.query.filter_by(id=songid1).first().filename
+    #audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.note for i in Beat.query.filter_by(song_id=songid1)]
     ar = dist(dist_value, posi)
 
@@ -205,12 +205,15 @@ def dub2(songid1, songid2, dist_value, posi, var):
         while dubhead < 60:
             rstart = [s.start for s in Beat.query.filter_by(note=i)]
             rend = [s.end for s in Beat.query.filter_by(note=i)]
-            rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
+            source = [s.song_id for s in Beat.query.filter_by(note=i)]
+            rpool = [(rstart[i], rend[i], source[i]) for i in range(0, len(rstart))]
 
 
             sl = random.choice(rpool)
             bl = int(sl[1]-sl[0])
             l = (sl[1]+(bl*np.random.choice(16, p=ar)))
+            filename = Song.query.filter_by(id=sl[2]).first().filename
+            audio = dsp.read(os.path.join(app.instance_path, filename))
             a = audio[sl[0]:l]
             stime = librosa.samples_to_time(len(a), sr=44100)
             #var = 0.5
