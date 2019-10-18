@@ -165,8 +165,6 @@ def upload():
         return redirect(url_for('profile'))
     return render_template('upload.html', title='Upload New Track', form=form)
 
-
-
 def dub(songid1, songid2, dist_value, posi, var):
     out = dsp.buffer()
     dubhead = 0
@@ -194,6 +192,33 @@ def dub(songid1, songid2, dist_value, posi, var):
             dubhead += stime - ((stime/2)*var)
     return out
 
+def dub2(songid1, songid2, dist_value, posi, var):
+    out = dsp.buffer()
+    dubhead = 0
+    filename = Song.query.filter_by(id=songid1).first().filename
+    audio = dsp.read(os.path.join(app.instance_path, filename))
+    labels2 = [i.note for i in Beat.query.filter_by(song_id=songid1)]
+    ar = dist(dist_value, posi)
+
+
+    for e, i in enumerate(labels2):
+        while dubhead < 60:
+            rstart = [s.start for s in Beat.query.filter_by(note=i)]
+            rend = [s.end for s in Beat.query.filter_by(note=i)]
+            rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
+
+
+            sl = random.choice(rpool)
+            bl = int(sl[1]-sl[0])
+            l = (sl[1]+(bl*np.random.choice(16, p=ar)))
+            a = audio[sl[0]:l]
+            stime = librosa.samples_to_time(len(a), sr=44100)
+            #var = 0.5
+            a = a.taper((stime/2)*var)
+            out.dub(a, dubhead)
+            dubhead += stime - ((stime/2)*var)
+    return out
+
 
 @app.route('/remix', methods=['GET', 'POST'])
 @login_required
@@ -206,7 +231,10 @@ def remix():
         dist_value = float(form.dist_value.data)
         posi = form.posi.data - 1
         var = float(form.var.data)
-        remix = dub(songid1, songid2, dist_value, posi, var)
+        if form.allnote == True:
+            remix = dub2(songid1, songid2, dist_value, posi, var)
+        else:
+            remix = dub(songid1, songid2, dist_value, posi, var)
         remix.write(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'))
         return send_file(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'), as_attachment=True)
 

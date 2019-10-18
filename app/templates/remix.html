@@ -33,6 +33,10 @@
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
+		<p>
+            {{ form.allnote.label }}<br>
+            {{ form.allnote() }}<br>
+        </p>
 		<p>{{ form.submit() }}</p>
 	</form>
 {% endblock %}
