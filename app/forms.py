@@ -47,6 +47,7 @@ class RemixForm(FlaskForm):
     dist_value = DecimalField(u'Beat Chance', validators=[InputRequired()], places=4)
     posi = IntegerField(u'Beat Length', validators=[InputRequired()])
     var = DecimalField(u'Smoothing', validators=[InputRequired()], places=1)
+    allnote = BooleanField(u'Experimental (Template Ignored)')
 
     def validate_posi(self, posi):
         if posi.data > 16 or posi.data < 1:
