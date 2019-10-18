@@ -231,7 +231,7 @@ def remix():
         dist_value = float(form.dist_value.data)
         posi = form.posi.data - 1
         var = float(form.var.data)
-        if form.allnote == True:
+        if form.allnote.data == True:
             remix = dub2(songid1, songid2, dist_value, posi, var)
         else:
             remix = dub(songid1, songid2, dist_value, posi, var)
