@@ -15,6 +15,7 @@ from sklearn.cluster import KMeans
 from itertools import tee
 from pippi import dsp
 from pydub import AudioSegment
+import time
 
 
 
@@ -175,11 +176,11 @@ def dub(songid1, songid2, dist_value, posi, var):
 
 
     for e, i in enumerate(labels2):
-        while dubhead < 60:
+        while dubhead < 15:
             rstart = [s.start for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rend = [s.end for s in Beat.query.filter_by(n_group=i, song_id=songid1)]
             rpool = [(rstart[i], rend[i]) for i in range(0, len(rstart))]
-
+            
 
             sl = random.choice(rpool)
             bl = int(sl[1]-sl[0])
@@ -199,27 +200,46 @@ def dub2(songid1, songid2, dist_value, posi, var):
     #audio = dsp.read(os.path.join(app.instance_path, filename))
     labels2 = [i.note for i in Beat.query.filter_by(song_id=songid1)]
     ar = dist(dist_value, posi)
+    beatchoice = []
+    beatread = []
+    beatdub = []
 
-
+    
     for e, i in enumerate(labels2):
-        while dubhead < 60:
+        
+        while dubhead <= 30 #some number of beats:
+            timestart = time.time()
+            #?this needs to actually be randomized = rend should be dependent on rstart, which is up to chance maybe...
             rstart = [s.start for s in Beat.query.filter_by(note=i)]
             rend = [s.end for s in Beat.query.filter_by(note=i)]
             source = [s.song_id for s in Beat.query.filter_by(note=i)]
-            rpool = [(rstart[i], rend[i], source[i]) for i in range(0, len(rstart))]
-
+            bidx = [b.id for b in Beat.query.filter_by(note=i)]
+            rpool = [(rstart[i], rend[i], source[i], bidx[i]) for i in range(0, len(rstart))]
+            
 
             sl = random.choice(rpool)
+            beatlog.append(sl[3])
+            #return beatlog and analyze stats
+            #send log to remix call
+            time1 = time.time()
             bl = int(sl[1]-sl[0])
             l = (sl[1]+(bl*np.random.choice(16, p=ar)))
             filename = Song.query.filter_by(id=sl[2]).first().filename
             audio = dsp.read(os.path.join(app.instance_path, filename))
+            time2 = time.time()
             a = audio[sl[0]:l]
             stime = librosa.samples_to_time(len(a), sr=44100)
             #var = 0.5
             a = a.taper((stime/2)*var)
             out.dub(a, dubhead)
+            time3 = time.time()
             dubhead += stime - ((stime/2)*var)
+            
+            beatchoice.append(time1 - timestart)
+            beatread.append(time2 - time1)
+            beatdub.append(time3 - time2)
+    timedf = pd.DataFrame(list(zip(beatchoice, beatread, beatdub)), columns = ['beat choice', 'beat read', 'beat dub'])
+    timedf.to_csv(r'C:\Users\jonathan\Desktop\beatapp\times.csv')
     return out
 
 
@@ -227,19 +247,36 @@ def dub2(songid1, songid2, dist_value, posi, var):
 @login_required
 def remix():
     form = RemixForm()
-
+    #log random label parameters for use later
     if form.validate_on_submit():
         songid1 = form.song_source.data
         songid2 = form.remix_template.data
         dist_value = float(form.dist_value.data)
         posi = form.posi.data - 1
         var = float(form.var.data)
-        if form.allnote.data == True:
-            remix = dub2(songid1, songid2, dist_value, posi, var)
-        else:
-            remix = dub(songid1, songid2, dist_value, posi, var)
-        remix.write(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'))
-        return send_file(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'), as_attachment=True)
+        sidx = [i.id for i in Song.query.all()]
+        stats1 = []
+        for i in range(50):
+            stats2 = []
+            songid1 = random.choice(sidx)
+            songid2 = random.choice(sidx)
+            dist_value = float(form.dist_value.data)
+            posi = form.posi.data - 1
+            var = float(form.var.data)
+            note1 = [i.note for i in Beat.query.filter_by(song_id=songid1)]
+            ng1 = [i.n_group for i in Beat.query.filter_by(song_id=songid1)]
+            note2 = [i.note for i in Beat.query.filter_by(song_id=songid1)]
+            ng2 = [i.n_group for i in Beat.query.filter_by(song_id=songid1)]
+            stats2.append(songid1, songid2, dist_value, posi, var)
+            if form.allnote.data == True:
+                remix = dub2(songid1, songid2, dist_value, posi, var, note1, ng1, note2, ng2)
+            else:
+                remix = dub(songid1, songid2, dist_value, posi, var)
+            remix.write(os.path.join(app.instance_path, 'remixes/remix_' + str(current_user.id) + '.wav'))
+            timestr = time.strftime("%Y%m%d-%H%M%S")
+            return send_file((os.path.join(app.instance_path, 'remixes/remix_' + timestr) + '.wav'), as_attachment=True)
+            stats1.append(stats2)
+        
 
     return(render_template('remix.html', title='Remix a Track', form=form))
 
