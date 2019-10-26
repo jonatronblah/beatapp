@@ -222,6 +222,18 @@ def dub2(songid1, songid2, dist_value, posi, var):
             dubhead += stime - ((stime/2)*var)
     return out
 
+@app.route('/stats', methods=['GET', 'POST'])
+@login_required
+def stats():
+    usersongs = [s.id for s in Song.query.filter_by(user_id=int(current_user.id)).all()]
+    sid = random.choice(usersongs)
+    sng = Song.query.filter_by(id=sid).first()
+    songname = sng.filename
+    specdata = [s.specbw for s in Beat.query.filter_by(song_id=sid)]
+    mfccdata = [s.mfcc for s in Beat.query.filter_by(song_id=sid)]
+    beatids = [s.id for s in Beat.query.filter_by(song_id=sid)]
+    return(render_template('stats.html', labels = beatids, values = specdata, values1 = mfccdata, song = songname))
+    
 
 @app.route('/remix', methods=['GET', 'POST'])
 @login_required
