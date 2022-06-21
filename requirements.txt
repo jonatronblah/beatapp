@@ -18,7 +18,7 @@ Mako==1.1.0
 MarkupSafe==1.1.1
 mysqlclient==1.4.4
 numba==0.45.1
-numpy==1.17.2
+numpy==1.22.0
 pandas==0.25.1
 Pillow==6.2.0
 pippi==2.0.0b3
