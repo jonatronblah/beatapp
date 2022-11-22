@@ -20,7 +20,7 @@ mysqlclient==1.4.4
 numba==0.45.1
 numpy==1.17.2
 pandas==0.25.1
-Pillow==6.2.0
+Pillow==9.3.0
 pippi==2.0.0b3
 pycparser==2.19
 pydub==0.23.1
